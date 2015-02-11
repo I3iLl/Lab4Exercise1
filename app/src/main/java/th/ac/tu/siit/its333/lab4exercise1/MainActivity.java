@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 
@@ -29,6 +31,7 @@ public class MainActivity extends ActionBarActivity {
         super.onResume();
 
         // This method is called when this activity is put foreground.
+        calculate();
 
     }
 
@@ -48,18 +51,61 @@ public class MainActivity extends ActionBarActivity {
                 break;
 
             case R.id.btReset:
-
+                SQLiteDatabase db = helper.getWritableDatabase();
+                int n_rows = db.delete("course", "", null);
+                onResume();
                 break;
         }
     }
 
+    public void calculate(){
+        int cr = 0;         // Credits
+        double gp = 0.0;    // Grade points
+        double gpa = 0.0;   // Grade point average
+
+        helper = new CourseDBHelper(this);
+        SQLiteDatabase db = helper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT SUM(credit) AS A, SUM(value*credit) AS B FROM course;",
+                //"SELECT * FROM course;",
+                null);
+
+        cursor.moveToFirst();
+        cr = cursor.getInt(0);
+        gp = cursor.getDouble(1);
+        gpa = gp/cr;
+
+        TextView tvGP = (TextView)findViewById(R.id.tvGP);
+        TextView tvCR = (TextView)findViewById(R.id.tvCR);
+        TextView tvGPA = (TextView)findViewById(R.id.tvGPA);
+
+        tvGPA.setText(Double.toString(gpa));
+        tvCR.setText(Integer.toString(cr));
+        tvGP.setText(Double.toString(gp));
+
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         if (requestCode == 88) {
             if (resultCode == RESULT_OK) {
+
                 String code = data.getStringExtra("code");
                 int credit = data.getIntExtra("credit", 0);
                 String grade = data.getStringExtra("grade");
+
+                helper = new CourseDBHelper(this);
+
+                // Add temporary data
+                SQLiteDatabase dbw = helper.getWritableDatabase();
+                ContentValues ri = new ContentValues();
+                ri.put("code", code);
+                ri.put("credit", credit);
+                ri.put("grade", grade);
+                ri.put("value", gradeToValue(grade));
+                long new_id = dbw.insert("course", null, ri);
+                dbw.close();
 
             }
         }
@@ -107,4 +153,5 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

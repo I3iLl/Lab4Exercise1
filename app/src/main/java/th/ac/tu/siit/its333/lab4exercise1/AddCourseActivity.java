@@ -35,6 +35,7 @@ public class AddCourseActivity extends ActionBarActivity {
             t.show();
         }
         else {
+
             Intent result = new Intent();
             result.putExtra("code", sCode);
             result.putExtra("credit", Integer.valueOf(sCR));
@@ -43,6 +44,7 @@ public class AddCourseActivity extends ActionBarActivity {
             result.putExtra("grade", grade);
             this.setResult(RESULT_OK, result);
             this.finish();
+
         }
     }
 
